@@ -30,11 +30,13 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.expensestracking.TransactionsViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
-@Preview
 @Composable
-fun AddTransactionScreen() {
+fun AddTransactionScreen(
+    vm: TransactionsViewModel
+) {
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -105,7 +107,7 @@ fun AddTransactionScreen() {
         Spacer(modifier = Modifier.height(24.dp))
 
         Button(
-            onClick = { /*TODO*/ },
+            onClick = { vm.onTransactionAdded() },
             modifier = Modifier.width(200.dp)
         ) {
             Text(text = "Add")

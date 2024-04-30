@@ -29,10 +29,12 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.expensestracking.TransactionsViewModel
 
-@Preview
 @Composable
-fun HomeScreen() {
+fun HomeScreen(
+    vm: TransactionsViewModel
+) {
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -74,7 +76,7 @@ fun HomeScreen() {
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        Button(onClick = { /*TODO: Navigate to second screen*/ }) {
+        Button(onClick = { vm.onAddTransaction() }) {
             Text(text = "Add transaction")
         }
 
