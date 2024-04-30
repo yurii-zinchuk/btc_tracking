@@ -10,8 +10,6 @@ import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
-import androidx.lifecycle.ViewModel
-import androidx.navigation.NavController
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import com.example.expensestracking.presentation.navigation.Navigation
@@ -19,11 +17,12 @@ import com.example.expensestracking.presentation.navigation.Route
 import com.example.expensestracking.presentation.theme.ExpensesTrackingTheme
 
 class MainActivity : ComponentActivity() {
-    private val vm: TransactionsViewModel by lazy { TransactionsViewModel() }
+    private val vm: MainViewModel by lazy { MainViewModel() }
     private lateinit var navController: NavHostController
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        ApplicationContextProvider.initialize(applicationContext)
 
         initObservers()
         initContent()
