@@ -53,6 +53,7 @@ import com.example.expensestracking.presentation.model.TransactionsListItem
 fun HomeScreen(
     vm: MainViewModel
 ) {
+    vm.loadTransactions()
     Column(
         modifier = Modifier
             .fillMaxSize()

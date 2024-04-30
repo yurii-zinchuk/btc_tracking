@@ -10,12 +10,18 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun transactionDao(): TransactionDao
 
     companion object {
+        private var instance: AppDatabase? = null
+
         fun getInstance(): AppDatabase {
-            return Room.databaseBuilder(
-                ApplicationContextProvider.getAppContext(),
-                AppDatabase::class.java,
-                "app_database"
-            ).build()
+            if (instance == null) {
+                instance = Room.databaseBuilder(
+                    ApplicationContextProvider.getAppContext(),
+                    AppDatabase::class.java,
+                    "app_database"
+                ).build()
+            }
+
+            return instance as AppDatabase
         }
     }
 }

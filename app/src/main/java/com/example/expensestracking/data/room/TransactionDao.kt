@@ -12,9 +12,6 @@ interface TransactionDao {
     @Query("SELECT * FROM transactions ORDER BY time DESC LIMIT :limit OFFSET :offset")
     suspend fun getTransactionsPerPage(limit: Int, offset: Int): List<TransactionDB>
 
-    @Query("SELECT * FROM transactions ORDER BY time DESC")
-    fun getTransactions(): PagingSource<Int, TransactionDB>
-
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insert(transaction: TransactionDB)
 }

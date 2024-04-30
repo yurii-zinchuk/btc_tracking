@@ -19,7 +19,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -30,6 +29,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.expensestracking.MainViewModel
+import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -43,8 +43,6 @@ fun AddTransactionScreen(
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         var isDropdownVisible by rememberSaveable { mutableStateOf(false) }
-        var selectedCategory by rememberSaveable { mutableStateOf("") }
-        var transactionAmount by remember { mutableStateOf("") }
 
         Spacer(modifier = Modifier.height(240.dp))
 
@@ -64,7 +62,7 @@ fun AddTransactionScreen(
                 LocalTextInputService provides null
             ) {
                 OutlinedTextField(
-                    value = selectedCategory,
+                    value = vm.selectedTransactionCategory.value?.name ?: "",
                     onValueChange = {},
                     modifier = Modifier
                         .menuAnchor()
@@ -82,11 +80,11 @@ fun AddTransactionScreen(
                 onDismissRequest = {
                     isDropdownVisible = isDropdownVisible.not()
                 }) {
-                repeat(5) {
+                vm.transactionCategories.value.forEach {
                     DropdownMenuItem(
-                        text = { Text(text = "item: $it") },
+                        text = { Text(text = it.name.lowercase().capitalize(Locale.ROOT)) },
                         onClick = {
-                            selectedCategory = it.toString()
+                            vm.onSelectNewTransactionCategory(it)
                             isDropdownVisible = false
                         })
                 }
@@ -96,8 +94,8 @@ fun AddTransactionScreen(
         Spacer(modifier = Modifier.height(12.dp))
 
         OutlinedTextField(
-            value = transactionAmount,
-            onValueChange = { transactionAmount = it },
+            value = vm.selectedTransactionAmount.value ?: "",
+            onValueChange = { vm.onSelectNewTransactionAmount(it) },
             label = { Text(text = "Amount") },
             suffix = { Text(text = "BTC") },
             keyboardOptions = KeyboardOptions.Default.copy(keyboardType = KeyboardType.Number)
