@@ -10,6 +10,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.paging.PagingData
 import androidx.paging.cachedIn
+import androidx.paging.insertSeparators
 import androidx.paging.map
 import com.example.expensestracking.domain.model.Transaction
 import com.example.expensestracking.domain.model.TransactionCategory
@@ -63,21 +64,47 @@ class MainViewModel(
     val selectedTransactionAmount = _selectedTransactionAmount as State<String?>
     val transactionCategories = mutableStateOf(TransactionCategory.entries)
 
-    lateinit var transactionsData: Flow<PagingData<TransactionsListItem.TransactionItem>>
+    lateinit var transactionsData: Flow<PagingData<TransactionsListItem>>
 
+    // Yes, it needs refactoring :/
     fun loadTransactions() {
         transactionsData = getTransactionsUseCase.execute()
             .map { pagingData ->
-                pagingData.map { transaction ->
-                    TransactionsListItem.TransactionItem(
-                        if (transaction.type == TransactionType.EXPENSE) Color.Red else Color.Green,
-                        transaction.category.toString().lowercase().capitalize(Locale.ROOT),
-                        transaction.amount.toString(),
-                        transaction.time.run { "$hours:$minutes" }
-                    )
+
+                pagingData.insertSeparators { before: Transaction?, after: Transaction? ->
+                    if (before == null && after != null) {
+                        // This is the first or last item date
+                        TransactionsListItem.DateItem(
+                            "${after.time.date}.${after.time.month + 1}.${after.time.year + 1900}"
+                        )
+                    } else if (before == null || after == null) {
+                        null
+                    } else if (
+                        before.time.date != after.time.date ||
+                        before.time.month != after.time.month ||
+                        before.time.year != after.time.year
+                    ) {
+                        // Transactions span different dates, so add a DateItem separator
+                        TransactionsListItem.DateItem(
+                            "${after.time.date}.${after.time.month}.${after.time.year}"
+                        )
+                    } else {
+                        // Transactions are on the same date, so no separator needed
+                        null
+                    }
+                }.map { item ->
+                    if (item is Transaction) {
+                        TransactionsListItem.TransactionItem(
+                            if (item.type == TransactionType.EXPENSE) Color.Red else Color.Green,
+                            item.category.toString().lowercase().capitalize(Locale.ROOT),
+                            item.amount.toString(),
+                            item.time.run { "$hours:$minutes" }
+                        )
+                    } else item
                 }
+
             }
-            .cachedIn(viewModelScope)
+            .cachedIn(viewModelScope) as Flow<PagingData<TransactionsListItem>>
 
         viewModelScope.launch {
             _balance.doubleValue = getBalanceUseCase.execute()

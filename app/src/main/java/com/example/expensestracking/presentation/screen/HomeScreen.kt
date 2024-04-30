@@ -32,7 +32,6 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -123,15 +122,15 @@ fun HomeScreen(
 }
 
 @Composable
-private fun TransactionsList(transactions: LazyPagingItems<TransactionsListItem.TransactionItem>) {
+private fun TransactionsList(transactions: LazyPagingItems<TransactionsListItem>) {
     LazyColumn(
         modifier = Modifier.fillMaxSize()
     ) {
-        items(transactions.itemCount) {
-//            if (it is TransactionsListItem.TransactionItem)
-            transactions[it]?.let { it1 -> TransactionItem(it1) }
-//            else
-//                DateItem(it as TransactionsListItem.DateItem)
+        items(transactions.itemSnapshotList) {
+            if (it is TransactionsListItem.TransactionItem)
+                TransactionItem(it)
+            else
+                DateItem(it as TransactionsListItem.DateItem)
         }
     }
 }
