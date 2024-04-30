@@ -24,23 +24,14 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         ApplicationContextProvider.initialize(applicationContext)
 
-//        runBlocking {
-//            repeat(500){
-//                AppDatabase.getInstance().transactionDao().insert(
-//                    TransactionDB(
-//                        type = TransactionType.EXPENSE,
-//                        category = TransactionCategory.TAXI,
-//                        amount = 2343.4,
-//                        time = Date.from(
-//                            Instant.now()
-//                        )
-//                    )
-//                )
-//            }
-//        }
-
         initObservers()
         initContent()
+    }
+
+    override fun onResume() {
+        super.onResume()
+
+        vm.tryFetchExchangeRate()
     }
 
     private fun initContent() {

@@ -14,8 +14,14 @@ import androidx.paging.map
 import com.example.expensestracking.domain.model.Transaction
 import com.example.expensestracking.domain.model.TransactionCategory
 import com.example.expensestracking.domain.model.TransactionType
+import com.example.expensestracking.domain.usecase.AddToBalanceUseCase
 import com.example.expensestracking.domain.usecase.AddTransactionUseCase
+import com.example.expensestracking.domain.usecase.FetchExchangeRateUseCase
+import com.example.expensestracking.domain.usecase.GetBalanceUseCase
+import com.example.expensestracking.domain.usecase.GetExchangeRateUseCase
+import com.example.expensestracking.domain.usecase.GetLastFetchedExchangeRateHoursUseCase
 import com.example.expensestracking.domain.usecase.GetTransactionsUseCase
+import com.example.expensestracking.domain.usecase.SubtractFromBalanceUseCase
 import com.example.expensestracking.presentation.model.TransactionsListItem
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
@@ -24,18 +30,25 @@ import kotlinx.coroutines.launch
 import java.time.Instant
 import java.util.Date
 import java.util.Locale
+import kotlin.math.absoluteValue
 
 class MainViewModel(
     private val getTransactionsUseCase: GetTransactionsUseCase = GetTransactionsUseCase(),
-    private val addTransactionUseCase: AddTransactionUseCase = AddTransactionUseCase()
+    private val addTransactionUseCase: AddTransactionUseCase = AddTransactionUseCase(),
+    private val addToBalanceUseCase: AddToBalanceUseCase = AddToBalanceUseCase(),
+    private val subtractFromBalanceUseCase: SubtractFromBalanceUseCase = SubtractFromBalanceUseCase(),
+    private val getBalanceUseCase: GetBalanceUseCase = GetBalanceUseCase(),
+    private val getExchangeRateUseCase: GetExchangeRateUseCase = GetExchangeRateUseCase(),
+    private val getLastFetchedExchangeRateHoursUseCase: GetLastFetchedExchangeRateHoursUseCase = GetLastFetchedExchangeRateHoursUseCase(),
+    private val fetchExchangeRateUseCase: FetchExchangeRateUseCase = FetchExchangeRateUseCase()
 ) : ViewModel() {
     // Private Events
     private val _eventAddTransaction = MutableLiveData<Unit>()
     private val _eventTransactionAdded = MutableLiveData<Unit>()
 
     // Private State
-    private val _balance = mutableDoubleStateOf(2358.2)
-    private val _exchangeRate = mutableDoubleStateOf(6312.2)
+    private val _balance = mutableDoubleStateOf(0.0)
+    private val _exchangeRate = mutableDoubleStateOf(0.0)
     private val _selectedTransactionCategory = mutableStateOf<TransactionCategory?>(null)
     private val _selectedTransactionAmount = mutableStateOf<String?>(null)
 
@@ -65,6 +78,19 @@ class MainViewModel(
                 }
             }
             .cachedIn(viewModelScope)
+
+        viewModelScope.launch {
+            _balance.doubleValue = getBalanceUseCase.execute()
+            _exchangeRate.doubleValue = getExchangeRateUseCase.execute()
+        }
+    }
+
+    fun tryFetchExchangeRate() = viewModelScope.launch(Dispatchers.IO) {
+        val currentHour = Date.from(Instant.now()).hours
+        val lastFetchedHour = getLastFetchedExchangeRateHoursUseCase.execute()
+        if ((currentHour - lastFetchedHour).absoluteValue >= 1) {
+            fetchExchangeRateUseCase.execute()
+        }
     }
 
     fun onAddTransaction() {
@@ -82,16 +108,26 @@ class MainViewModel(
     fun onTransactionAdded() = viewModelScope.launch(Dispatchers.IO) {
         addTransactionUseCase.execute(
             Transaction(
-                type = if (_selectedTransactionAmount.value!!.toDouble() < 0) TransactionType.EXPENSE else TransactionType.INCOME,
+                type = TransactionType.EXPENSE,
                 category = _selectedTransactionCategory.value!!,
                 amount = _selectedTransactionAmount.value!!.toDouble(),
                 time = Date.from(Instant.now())
             )
         )
+        subtractFromBalanceUseCase.execute(_selectedTransactionAmount.value!!.toDouble())
         _eventTransactionAdded.postValue(Unit)
     }
 
-    fun onTopUpBalance(amount: Double) {
+    fun onTopUpBalance(amount: Double) = viewModelScope.launch(Dispatchers.IO) {
         _balance.doubleValue += amount
+        addToBalanceUseCase.execute(amount)
+        addTransactionUseCase.execute(
+            Transaction(
+                type = TransactionType.INCOME,
+                category = TransactionCategory.OTHER,
+                amount = amount,
+                time = Date.from(Instant.now())
+            )
+        )
     }
 }

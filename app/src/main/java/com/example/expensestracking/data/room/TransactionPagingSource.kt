@@ -1,4 +1,4 @@
-package com.example.expensestracking.data
+package com.example.expensestracking.data.room
 
 import androidx.paging.PagingSource
 import androidx.paging.PagingState
